@@ -11,7 +11,7 @@ import CoreMotion
 class ViewController: UIViewController {
     
     var playerView: UIView!
-    var plyayerMotionMager: CMMotionManager!
+    var playerMotionManager: CMMotionManager!
     var speedX:Double = 0.0
     var speedY:Double = 0.0
 
@@ -45,7 +45,7 @@ let maze = [
         let cellOffsetY = screenSize.height / CGFloat(maze.count * 2)
         
         for y in 0 ..< maze.count {
-           for x in 0 ..< maze[y].count {
+            for x in 0 ..< maze[y].count{
                switch maze[y][x] {
             
                     case 1:
@@ -66,11 +66,14 @@ let maze = [
                          view.addSubview(goalView)
                 
             default:
-                break
+                
+            break
+               }
             }
         }
-    }
-    
+        
+               
+
     func createView(x: Int, y: Int, width:CGFloat, height:CGFloat, offsetX: CGFloat,offsetY: CGFloat) -> UIView {
         
         let rect = CGRect(x: 0, y: 0, width: width, height: height)
@@ -81,19 +84,48 @@ let maze = [
         view.center = center
 
         return view
-    
+        
     }
-        playerView = UIView(frame:  CGRect(x: 0, y: 0, width: cellWidth / 6, height:cellHeight))
+
+    
+        playerView = UIView(frame:  CGRect(x: 0, y: 0, width: cellWidth / 6, height:cellHeight / 6))
         playerView.center = startView.center
         playerView.backgroundColor = UIColor.gray
         view.addSubview(playerView)
         
-        plyayerMotionMager = CMMotionManager()
-        plyayerMotionMager.accelerometerUpdateInterval = 0.02
+        playerMotionManager = CMMotionManager()
+        playerMotionManager.accelerometerUpdateInterval = 0.02
+     
+        
         
         startAccelerometer()
-
         
+        func gameCheck(result: String, message: String){
+            if playerMotionManager.isAccelerometerActive{
+                playerMotionManager.stopAccelerometerUpdates()
+            }
+            let  gameCheckAlert: UIAlertController = UIAlertController(title: result, message: message, preferredStyle: .alert)
+            let retryAction = UIAlertAction (title: "もう一度", style: .default, handler: {
+                (action: UIAlertAction!) -> Void in
+                self.retry()
+            })
+            
+            gameCheckAlert.addAction(retryAction)
+       
+            self.present(gameCheckAlert, animated: true, completion: nil)
+        }
+        
+    func retry(){
+        playerView.center = startView.center
+        if !playerMotionManager.isAccelerometerActive{
+                self.startAccelerometer()
+        }
+        speedX = 0.0
+        speedY = 0.0
+    }}
+    
+    
+    
     func startAccelerometer(){
         let handler: CMAccelerometerHandler = {(CMAccelerometerData: CMAccelerometerData?, error: Error?) -> Void in
             self.speedX += CMAccelerometerData!.acceleration.x
@@ -123,21 +155,22 @@ let maze = [
         
             for wallRect in self.wallRectArray {
                 if wallRect.intersects(self.playerView.frame) {
-                    print("Game Over")
+                   self.GameCheck(result: "gameover", message: "壁に当たりました")
                     return
                 }
             }
             
             if self.goalView.frame.intersects(self.playerView.frame){
-                print("Clear")
+                self.GameCheck (reslt: "clear", message:"クリアしました!")
                 return
             }
             
             self.playerView.center = CGPoint(x: posX, y: posY)
-            
-    　　  }
-         plyayerMotionMager.startAccelerometerUpdates (to: OperationQueue.main, withHandler: handler)
+    
+        }
+         playerMotionManager.startAccelerometerUpdates (to: OperationQueue.main, withHandler: handler)
     }
 
     
-}
+ }
+
